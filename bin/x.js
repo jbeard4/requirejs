@@ -74,7 +74,25 @@ var console;
         }
 
         fileName = process.argv[3 - argOffset];
+    }else{
+        env = "other";
+
+        fileName = undefined;   //assume we can't read arguments. will be set to main.js later
+
+        exec = function(s){eval(s)};
+
+        //Define a console.log for easier logging. Don't
+        //get fancy though.
+        if (typeof console === 'undefined') {
+            console = {
+                log: function () {
+                    print.apply(undefined, arguments);
+                }
+            };
+        }
+         
     }
+
 
     //Make sure build path ends in a slash.
     requireBuildPath = requireBuildPath.replace(/\\/g, '/');
@@ -89,7 +107,8 @@ var console;
 
     //These are written out long-form so that they can be replaced by
     //the distribution script.
-    if (env === 'rhino') {
+    //rhino adapter seems like it will work for most shells
+    if (env === 'rhino' || env === 'other') {
         exec(readFile(requireBuildPath + 'adapt/rhino.js'), 'rhino.js');
     } else if (env === 'node') {
         exec(readFile(requireBuildPath + 'adapt/node.js'), 'node.js');
@@ -119,6 +138,10 @@ var console;
         }
     }
 
-    exec(readFile(fileName), fileName);
+    if(env === "rhino" || env === "node"){
+        exec(readFile(fileName), fileName);
+    }else{
+        load(fileName); //not all shells can read files (e.g. jsc). but all seem to have load()
+    }
 
 }((typeof Packages !== 'undefined' ? arguments : []), (typeof readFile !== 'undefined' ? readFile: undefined)));
